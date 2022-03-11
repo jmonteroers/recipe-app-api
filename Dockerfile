@@ -6,10 +6,20 @@ MAINTAINER Juan Antonio Montero de Espinosa
 # Python prints outputs directly
 ENV PYTHONUNBUFFERED 1
 
+# Install dependencies for psycopg2 to work
+# --update --no-cache updates register before installing the postgres client
+# but does not keep it cach'd
+RUN apk add --update --no-cache postgresql-client
+# --virtual allows us to define an alias for those dependencies
+RUN apk add --update --no-cache --virtual .tmp-build-deps \
+  gcc libc-dev linux-headers postgresql-dev
+
 # Install our dependencies from a requirements.txt file
 COPY ./requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 
+# Delete temporary requirements
+RUN apk del .tmp-build-deps
 
 RUN mkdir /app
 # default location to run our docker image
