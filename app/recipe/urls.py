@@ -6,6 +6,7 @@ from recipe import views
 
 # register our view with our router
 router = DefaultRouter()
+router.register('ingredients', views.IngredientViewSet)
 router.register('tags', views.TagViewSet)
 
 
