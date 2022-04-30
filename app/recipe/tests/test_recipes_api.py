@@ -8,6 +8,13 @@ from rest_framework import status
 from core.models import Recipe, Tag, Ingredient
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 
+
+default_payload = {
+        "title": "Costillas con tomate",
+        "time_minutes": 40,
+        "price": 4.00
+    }
+
 # /api/recipe/recipes
 RECIPES_URL = reverse("recipe:recipe-list")
 
@@ -18,11 +25,7 @@ def detail_url(recipe_id: int) -> str:
 
 def sample_recipe(user, **params):
     """Create and return a sample recipe"""
-    defaults = {
-        "title": "Costillas con tomate",
-        "time_minutes": 40,
-        "price": 4.00
-    }
+    defaults = default_payload.copy()
     defaults.update(params)
     return Recipe.objects.create(user=user, **defaults)
 
@@ -104,10 +107,43 @@ class PrivateUserApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(serializer.data, res.data)
+    
+    def test_create_simple_recipe(self):
+        """Test creating recipe without tags nor ingredients"""
+        res = self.client.post(RECIPES_URL, default_payload)
+        new_recipe = Recipe.objects.get(id=res.data["id"])
 
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
+        for key in default_payload.keys():
+            self.assertEqual(default_payload[key], getattr(new_recipe, key))
+    
+    def test_create_recipe_with_tags(self):
+        """Test creating recipe with tags, no ingredients"""
+        payload = default_payload.copy()
+        tag1 = sample_tag(user=self.user, name="Vegan")
+        tag2 = sample_tag(user=self.user, name="Meaty")
+        payload["tags"] = [tag1.id, tag2.id]
+        res = self.client.post(RECIPES_URL, payload)
+        recipe = Recipe.objects.get(id=res.data["id"])
+        tags = recipe.tags.all()
 
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(tags), len(payload["tags"]))
+        self.assertIn(tag1, tags)
+        self.assertIn(tag2, tags)
+    
+    def test_create_recipe_with_ingredients(self):
+        """Test creating recipe with ingredients, no tags"""
+        payload = default_payload.copy()
+        ingredient1 = sample_ingredient(user=self.user, name="Tomato")
+        ingredient2 = sample_ingredient(user=self.user, name="Chocolate")
+        payload["ingredients"] = [ingredient1.id, ingredient2.id]
+        res = self.client.post(RECIPES_URL, payload)
+        recipe = Recipe.objects.get(id=res.data["id"])
+        ingredients = recipe.ingredients.all()
 
-
-
-
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(ingredients), len(payload["ingredients"]))
+        self.assertIn(ingredient1, ingredients)
+        self.assertIn(ingredient2, ingredients)
