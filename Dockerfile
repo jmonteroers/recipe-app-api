@@ -24,7 +24,7 @@ RUN apk del .tmp-build-deps
 RUN mkdir /app
 # default location to run our docker image
 WORKDIR /app
-COPY ./app /app
+# COPY ./app /app
 
 # do this for security purposes, to avoid that an attacker may have
 # root access
