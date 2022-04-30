@@ -13,6 +13,7 @@ class CreateUserView(generics.CreateAPIView):
 class CreateTokenView(ObtainAuthToken):
     """Create a new auth token for user"""
     serializer_class = AuthTokenSerializer
+    # needed to view this API endpoint in the browser
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
 
 
