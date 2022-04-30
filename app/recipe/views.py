@@ -46,4 +46,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user).order_by("-title")
     
+    def get_serializer_class(self):
+        """Return different serializer class depending on url"""
+        if self.action == 'retrieve':
+            return serializers.RecipeDetailSerializer
+        return self.serializer_class
+    
 
