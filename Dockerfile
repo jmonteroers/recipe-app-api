@@ -1,47 +1,30 @@
-FROM python:3.7-alpine
+FROM python:3.9-alpine3.13
 # maintainer line is optional
-MAINTAINER Juan Antonio Montero de Espinosa
+LABEL maintainer="Juan Antonio Montero de Espinosa"
 
 # tells Python to run in unbuffered mode
-# Python prints outputs directly
+# Python prints outputs directly, allowing us to see logs immediately
 ENV PYTHONUNBUFFERED 1
 
-# Install dependencies for psycopg2 to work
-# --update --no-cache updates register before installing the postgres client
-# but does not keep it cach'd
-# jpeg-dev required to work with images
-RUN apk add --update --no-cache postgresql-client jpeg-dev
-# --virtual allows us to define an alias for those dependencies
-RUN apk add --update --no-cache --virtual .tmp-build-deps \
-  gcc libc-dev linux-headers postgresql-dev \
-  # for images
-  zlib zlib-dev
-
 # Install our dependencies from a requirements.txt file
-COPY ./requirements.txt /requirements.txt
-RUN pip install -r /requirements.txt
-
-# Delete temporary requirements
-RUN apk del .tmp-build-deps
+COPY ./requirements.txt /tmp/requirements.txt
 
 RUN mkdir /app
 # default location to run our docker image
+COPY ./app /app
 WORKDIR /app
-# COPY ./app /app
 
-# modifications to be able to share media
-# vol dir used for files that may need be shared with other containers (e.g. NGINX)
-# -p trick to create subdirectories directly
-RUN mkdir -p /vol/web/media
-RUN mkdir -p /vol/web/static
+EXPOSE 8000
 
-# do this for security purposes, to avoid that an attacker may have
-# root access
-# create a user that is going to run our application using Docker
-# D is only to run our processes, not have a home directory
-RUN adduser -D user
-# switch ownership of static/media to new user (R stands for Recursive)
-RUN chown -R user:user /vol/
-RUN chmod -R 755 /vol/web
+RUN python -m venv /py && \
+  /py/bin/pip install --upgrade pip && \
+  /py/bin/pip install -r /tmp/requirements.txt && \
+  rm -rf /tmp && \
+  adduser \
+    --disabled-password \
+    --no-create-home \
+    django-user
 
-USER user
+ENV PATH="/py/bin:$PATH"
+
+USER django-user
