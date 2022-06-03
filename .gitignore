@@ -130,3 +130,6 @@ dmypy.json
 
 # sqlite temp db
 app/devdb
+
+# postgres data volume
+dev-db-data
