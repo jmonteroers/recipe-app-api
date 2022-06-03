@@ -1,7 +1,7 @@
-import tempfile
-import os
+# import tempfile
+# import os
 
-from PIL import Image
+# from PIL import Image
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
